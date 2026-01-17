@@ -1,0 +1,5 @@
+Supabase Project: fvckvpxwmmmlriztybee
+API Key Name: OPENAI_API_KEY
+API Key Value: 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
+
+Dashboard: https://supabase.com/dashboard/project/fvckvpxwmmmlriztybee/settings/secrets

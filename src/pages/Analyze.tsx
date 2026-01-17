@@ -95,18 +95,23 @@ const Analyze = () => {
       // Call the Edge function directly so we can consume streaming responses when available.
       const functionsUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-resume`;
 
+      console.log("Calling analyze-resume function...");
+      console.log("Function URL:", functionsUrl);
+
       const resp = await fetch(functionsUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           // include publishable key so Supabase functions accept the request
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''}`
         },
         body: JSON.stringify({ resumeText, jobDescription, companyName: selectedCompany })
       });
 
       if (!resp.ok) {
         const text = await resp.text();
+        console.error("Response error:", resp.status, text);
         throw new Error(text || `Function error: ${resp.status}`);
       }
 
@@ -179,22 +184,22 @@ const Analyze = () => {
         setAnalysisComplete(true);
       }
 
-      // Save to database if user is logged in
-      if (user) {
+      // Save to database if user is logged in and analysis is complete
+      if (user && analysisComplete && results) {
         const { error: saveError } = await supabase.from("analyses").insert({
           user_id: user.id,
           resume_filename: file?.name || "resume.txt",
           resume_text: resumeText,
           job_description: jobDescription,
           company_name: selectedCompany,
-          compatibility_score: analysisResult.compatibilityScore,
-          matched_keywords: analysisResult.matchedKeywords,
-          missing_keywords: analysisResult.missingKeywords,
-          section_scores: analysisResult.sectionScores,
-          risk_level: analysisResult.riskLevel,
-          rejection_probability: analysisResult.rejectionProbability,
-          rejection_reasons: analysisResult.rejectionReasons,
-          suggestions: analysisResult.suggestions,
+          compatibility_score: results.compatibilityScore,
+          matched_keywords: results.matchedKeywords,
+          missing_keywords: results.missingKeywords,
+          section_scores: results.sectionScores,
+          risk_level: results.riskLevel,
+          rejection_probability: results.rejectionProbability,
+          rejection_reasons: results.rejectionReasons,
+          suggestions: results.suggestions,
         });
 
         if (saveError) {
@@ -210,7 +215,7 @@ const Analyze = () => {
     } catch (err) {
       console.error("Analysis error:", err);
       const errorMessage = err instanceof Error ? err.message : "Analysis failed";
-      setError(errorMessage);
+      setError(`❌ ${errorMessage}\n\nPlease ensure:\n1. Your resume and job description are complete\n2. Server API keys are configured properly\n3. Check browser console for more details`);
       toast({
         title: "Analysis Failed",
         description: errorMessage,

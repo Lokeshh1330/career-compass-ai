@@ -21,12 +21,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     const OPENAI_MODEL = Deno.env.get('OPENAI_MODEL') || 'gpt-4o-mini';
 
-    if (!LOVABLE_API_KEY && !OPENAI_API_KEY) {
-      console.error('No AI API key configured (LOVABLE_API_KEY or OPENAI_API_KEY)');
+    if (!OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is not configured');
       throw new Error('AI service is not configured');
     }
 

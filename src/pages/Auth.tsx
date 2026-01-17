@@ -55,8 +55,10 @@ const Auth = () => {
 
     try {
       if (isLogin) {
+        console.log("Attempting sign in...");
         const { error } = await signIn(email, password);
         if (error) {
+          console.error("Sign in error:", error);
           if (error.message.includes("Invalid login credentials")) {
             toast({
               title: "Login Failed",
@@ -66,7 +68,7 @@ const Auth = () => {
           } else {
             toast({
               title: "Login Failed",
-              description: error.message,
+              description: error.message || "Unable to sign in. Please check your credentials.",
               variant: "destructive",
             });
           }
@@ -78,29 +80,47 @@ const Auth = () => {
           navigate("/");
         }
       } else {
+        console.log("Attempting sign up...");
         const { error } = await signUp(email, password, fullName);
         if (error) {
+          console.error("Sign up error:", error);
           if (error.message.includes("User already registered")) {
             toast({
               title: "Account Exists",
               description: "This email is already registered. Please log in instead.",
               variant: "destructive",
             });
+          } else if (error.message.includes("over_email_send_rate_limit")) {
+            toast({
+              title: "Too Many Sign-Up Attempts",
+              description: "Please wait a moment before trying again.",
+              variant: "destructive",
+            });
           } else {
             toast({
               title: "Sign Up Failed",
-              description: error.message,
+              description: error.message || "Unable to create account. Please try again.",
               variant: "destructive",
             });
           }
         } else {
           toast({
             title: "Account Created!",
-            description: "Welcome to CareerReady-AI!",
+            description: "Check your email to confirm your account before signing in.",
           });
-          navigate("/");
+          setIsLogin(true);
+          setEmail("");
+          setPassword("");
+          setFullName("");
         }
       }
+    } catch (err) {
+      console.error("Auth error:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

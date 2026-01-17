@@ -169,11 +169,23 @@ const ATSScore = () => {
     setError(null);
 
     try {
+      console.log("Calling ATS score function...");
       const { data, error: fnError } = await supabase.functions.invoke("ats-score", {
-        body: { resumeText }
+        body: { resumeText },
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''}`
+        }
       });
 
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) {
+        console.error("Function error:", fnError);
+        throw new Error(`Function Error: ${fnError.message}`);
+      }
+      
+      if (!data) {
+        throw new Error("No data returned from analysis");
+      }
+
       if (data.error) throw new Error(data.error);
 
       setResults(data);
@@ -185,7 +197,7 @@ const ATSScore = () => {
     } catch (err) {
       console.error("ATS analysis error:", err);
       const errorMessage = err instanceof Error ? err.message : "Analysis failed";
-      setError(errorMessage);
+      setError(`❌ ${errorMessage}\n\nPlease ensure:\n1. Your resume is in a valid format\n2. Server API keys are configured properly`);
       toast({
         title: "Analysis Failed",
         description: errorMessage,
@@ -202,11 +214,23 @@ const ATSScore = () => {
     setIsOptimizing(true);
 
     try {
+      console.log("Calling optimize-resume function...");
       const { data, error: fnError } = await supabase.functions.invoke("optimize-resume", {
-        body: { resumeText, analysisResult: results }
+        body: { resumeText, analysisResult: results },
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''}`
+        }
       });
 
-      if (fnError) throw new Error(fnError.message);
+      if (fnError) {
+        console.error("Function error:", fnError);
+        throw new Error(`Function Error: ${fnError.message}`);
+      }
+
+      if (!data) {
+        throw new Error("No data returned from optimization");
+      }
+
       if (data.error) throw new Error(data.error);
 
       setOptimizedResume(data);
